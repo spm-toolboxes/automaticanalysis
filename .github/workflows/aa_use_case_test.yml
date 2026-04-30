@@ -29,7 +29,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
           android: true
@@ -52,10 +52,10 @@ jobs:
           git config --global core.eol lf
 
       - name: Check out repository under $GITHUB_WORKSPACE
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python 3.12.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Semantic version range syntax or exact version of a Python version
           python-version: '3.12.11'
@@ -63,7 +63,7 @@ jobs:
           architecture: 'x64'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f # v3.0.1
         with:
           # MATLAB release to set up R2024a
           release: R2024a
@@ -96,19 +96,19 @@ jobs:
           AWS_EC2_METADATA_DISABLED: true
 
       - name: Run script
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@2970c890bd6dfbc8ba4d640879c4c496dec4e426 # v3.1.0
         with:
           command: addpath(getenv('GITHUB_WORKSPACE')); aa_ver5; SPM = spmClass(fullfile('/test','tools','spm12')); SPM.load; aa_test('glob','aatest_ds000114_dartel','haltonerror',true); aa_test_getreport('/test/projects','/test/projects/report')
 
       - name: Archive data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aatest_ds000114_dartel
           path: |
             /test/projects/report/
 
       - name: Archive log
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: testlog_${{github.job}}
           path: |
@@ -123,7 +123,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
           android: true
@@ -146,10 +146,10 @@ jobs:
           git config --global core.eol lf
 
       - name: Check out repository under $GITHUB_WORKSPACE
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python 3.12.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Semantic version range syntax or exact version of a Python version
           python-version: '3.12.11'
@@ -157,7 +157,7 @@ jobs:
           architecture: 'x64'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f # v3.0.1
         with:
           # MATLAB release to set up R2024a
           release: R2024a
@@ -190,19 +190,19 @@ jobs:
           AWS_EC2_METADATA_DISABLED: true
 
       - name: Run script
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@2970c890bd6dfbc8ba4d640879c4c496dec4e426 # v3.1.0
         with:
           command: addpath(getenv('GITHUB_WORKSPACE')); aa_ver5; SPM = spmClass(fullfile('/test','tools','spm12')); SPM.load; aa_test('glob','aatest_ds000114_diffusion','haltonerror',true); aa_test_getreport('/test/projects','/test/projects/report')
 
       - name: Archive data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aatest_ds000114_diffusion
           path: |
             /test/projects/report/
 
       - name: Archive log
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: testlog_${{github.job}}
           path: |
@@ -217,7 +217,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
           android: true
@@ -240,10 +240,10 @@ jobs:
           git config --global core.eol lf
 
       - name: Check out repository under $GITHUB_WORKSPACE
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python 3.12.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Semantic version range syntax or exact version of a Python version
           python-version: '3.12.11'
@@ -251,7 +251,7 @@ jobs:
           architecture: 'x64'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f # v3.0.1
         with:
           # MATLAB release to set up R2024a
           release: R2024a
@@ -286,19 +286,19 @@ jobs:
           AWS_EC2_METADATA_DISABLED: true
 
       - name: Run script
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@2970c890bd6dfbc8ba4d640879c4c496dec4e426 # v3.1.0
         with:
           command: addpath(getenv('GITHUB_WORKSPACE')); aa_ver5; SPM = spmClass(fullfile('/test','tools','spm12')); SPM.load; aa_test('glob','aatest_ds000114_fmrisymlinks','haltonerror',true); aa_test_getreport('/test/projects','/test/projects/report')
 
       - name: Archive data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aatest_ds000114_fmrisymlinks
           path: |
             /test/projects/report/
 
       - name: Archive log
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: testlog_${{github.job}}
           path: |
@@ -313,7 +313,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
           android: true
@@ -336,10 +336,10 @@ jobs:
           git config --global core.eol lf
 
       - name: Check out repository under $GITHUB_WORKSPACE
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python 3.12.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Semantic version range syntax or exact version of a Python version
           python-version: '3.12.11'
@@ -347,7 +347,7 @@ jobs:
           architecture: 'x64'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f # v3.0.1
         with:
           # MATLAB release to set up R2024a
           release: R2024a
@@ -382,19 +382,19 @@ jobs:
           AWS_EC2_METADATA_DISABLED: true
 
       - name: Run script
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@2970c890bd6dfbc8ba4d640879c4c496dec4e426 # v3.1.0
         with:
           command: addpath(getenv('GITHUB_WORKSPACE')); aa_ver5; SPM = spmClass(fullfile('/test','tools','spm12')); SPM.load; aa_test('glob','aatest_ds000114_fmrilocalpipeline','haltonerror',true); aa_test_getreport('/test/projects','/test/projects/report')
 
       - name: Archive data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aatest_ds000114_fmrilocalpipeline
           path: |
             /test/projects/report/
 
       - name: Archive log
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: testlog_${{github.job}}
           path: |
@@ -409,7 +409,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
           android: true
@@ -432,10 +432,10 @@ jobs:
           git config --global core.eol lf
 
       - name: Check out repository under $GITHUB_WORKSPACE
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python 3.12.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Semantic version range syntax or exact version of a Python version
           python-version: '3.12.11'
@@ -443,7 +443,7 @@ jobs:
           architecture: 'x64'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f # v3.0.1
         with:
           # MATLAB release to set up R2024a
           release: R2024a
@@ -479,19 +479,19 @@ jobs:
           AWS_EC2_METADATA_DISABLED: true
 
       - name: Run script
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@2970c890bd6dfbc8ba4d640879c4c496dec4e426 # v3.1.0
         with:
           command: addpath(getenv('GITHUB_WORKSPACE')); aa_ver5; SPM = spmClass(fullfile('/test','tools','spm12')); SPM.load; aa_test('glob','aatest_ds000114_scrubbing','haltonerror',true); aa_test_getreport('/test/projects','/test/projects/report')
 
       - name: Archive data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aatest_ds000114_scrubbing
           path: |
             /test/projects/report/
 
       - name: Archive log
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: testlog_${{github.job}}
           path: |
@@ -506,7 +506,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
           android: true
@@ -529,10 +529,10 @@ jobs:
           git config --global core.eol lf
 
       - name: Check out repository under $GITHUB_WORKSPACE
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python 3.12.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Semantic version range syntax or exact version of a Python version
           python-version: '3.12.11'
@@ -540,7 +540,7 @@ jobs:
           architecture: 'x64'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f # v3.0.1
         with:
           # MATLAB release to set up R2024a
           release: R2024a
@@ -571,19 +571,19 @@ jobs:
           AWS_EC2_METADATA_DISABLED: true
 
       - name: Run script
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@2970c890bd6dfbc8ba4d640879c4c496dec4e426 # v3.1.0
         with:
           command: addpath(getenv('GITHUB_WORKSPACE')); aa_ver5; SPM = spmClass(fullfile('/test','tools','spm12')); SPM.load; aa_test('glob','aatest_ds002737_deface','haltonerror',true); aa_test_getreport('/test/projects','/test/projects/report')
 
       - name: Archive data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aatest_ds002737_deface
           path: |
             /test/projects/report/
 
       - name: Archive log
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: testlog_${{github.job}}
           path: |
@@ -598,7 +598,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
           android: true
@@ -621,10 +621,10 @@ jobs:
           git config --global core.eol lf
 
       - name: Check out repository under $GITHUB_WORKSPACE
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python 3.12.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Semantic version range syntax or exact version of a Python version
           python-version: '3.12.11'
@@ -632,7 +632,7 @@ jobs:
           architecture: 'x64'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f # v3.0.1
         with:
           # MATLAB release to set up R2024a
           release: R2024a
@@ -666,19 +666,19 @@ jobs:
           AWS_EC2_METADATA_DISABLED: true
 
       - name: Run script
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@2970c890bd6dfbc8ba4d640879c4c496dec4e426 # v3.1.0
         with:
           command: addpath(getenv('GITHUB_WORKSPACE')); aa_ver5; SPM = spmClass(fullfile('/test','tools','spm12')); SPM.load; aa_test('glob','aatest_lemon_meegsensor','haltonerror',true,'wheretoprocess','batch'); aa_test_getreport('/test/projects','/test/projects/report')
 
       - name: Archive data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aatest_${{github.job}}
           path: |
             /test/projects/report/
 
       - name: Archive log
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: testlog_${{github.job}}
           path: |
@@ -693,7 +693,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
         with:
           tool-cache: true
           android: true
@@ -716,10 +716,10 @@ jobs:
           git config --global core.eol lf
 
       - name: Check out repository under $GITHUB_WORKSPACE
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python 3.12.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           # Semantic version range syntax or exact version of a Python version
           python-version: '3.12.11'
@@ -727,7 +727,7 @@ jobs:
           architecture: 'x64'
 
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v2
+        uses: matlab-actions/setup-matlab@a0180c939fb1a28de13f44f7b778b912384ced1f # v3.0.1
         with:
           # MATLAB release to set up R2024a
           release: R2024a
@@ -759,19 +759,19 @@ jobs:
           AWS_EC2_METADATA_DISABLED: true
 
       - name: Run script
-        uses: matlab-actions/run-command@v2
+        uses: matlab-actions/run-command@2970c890bd6dfbc8ba4d640879c4c496dec4e426 # v3.1.0
         with:
           command: addpath(getenv('GITHUB_WORKSPACE')); aa_ver5; SPM = spmClass(fullfile('/test','tools','spm12')); SPM.load; aa_test('glob','aatest_lemon_meegsource','haltonerror',true); aa_test_getreport('/test/projects','/test/projects/report')
 
       - name: Archive data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: aatest_${{github.job}}
           path: |
             /test/projects/report/
 
       - name: Archive log
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: testlog_${{github.job}}
           path: |
