@@ -13,6 +13,9 @@ switch task
         infname = cellstr(aas_getfiles_bystream(aap,'meeg_session',[subj sess],'meeg'));
         
         [~, EL] = aas_cache_get(aap,'eeglab');
+        [~, FT] = aas_cache_get(aap,'fieldtrip');
+        FT.load;
+        FT.addExternal('inverse');
         EL.load;
         
         indfnEEG = strcmp(spm_file(infname,'ext'),'set');
@@ -21,9 +24,12 @@ switch task
         volcondfile = aas_getsetting(aap,'volumeCondutionModel');
         if ~exist(volcondfile,'file'), volcondfile = fullfile(EL.dipfitPath,volcondfile); end
         if ~exist(volcondfile,'file'), aas_log(aap,true,sprintf('Volume condition model %s not found',aas_getsetting(aap,'volumeCondutionModel'))); end
+
+        % mri intensities are expected to be non-negative integers
         mrifile = aas_getfiles_bystream_multilevel(aap,'subject',subj,'structural');
-        mri = ft_read_mri(mrifile,'dataformat','nifti_spm');
-        mri.anatomy = mri.anatomy/max(mri.anatomy(:));
+        mri = ft_read_mri(mrifile,'dataformat','nifti_spm');        
+        mri.anatomy(mri.anatomy<0) = 0;
+        mri.anatomy = round(mri.anatomy); 
         
         trans = aas_getsetting(aap,'transformation');
         if ischar(trans) % target channel location
@@ -52,7 +58,7 @@ switch task
         
         % symmetrically constrained bilateral dipoles
         if aas_getsetting(aap,'constrainSymmetrical'), EEG = fitTwoDipoles(EEG, 'LRR', 35); end
-        
+
         % plot dipoles
         pop_dipplot( EEG, 1:numel(EEG.dipfit.model) ,'mri',mri,'normlen','on','view',[-1,-1,1],'gui','off');
         set(gcf,'PaperPositionMode','auto');
@@ -62,8 +68,9 @@ switch task
         % save
         outfname = spm_file(infname,'prefix','dipfit_');
         pop_saveset(EEG,'filepath',aas_getsesspath(aap,subj,sess),'filename',spm_file(outfname{indfnEEG},'basename'));
-
+       
         EL.unload;
+        FT.unload;
                 
         %% Describe outputs
         aap = aas_desc_outputs(aap,subj,sess,'meeg',outfname);

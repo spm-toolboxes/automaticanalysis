@@ -9,7 +9,7 @@ function aatest_lemon_meeg(parameterfile, deleteprevious, wheretoprocess)
 
 aap = aa_test_inittest(mfilename('fullpath'), parameterfile, deleteprevious, wheretoprocess);
 
-SUBJS = [ 32301 32302 32303 ];
+SUBJS = [ 32301 32302 ];
 
 %% RECIPE
 EL = aas_inittoolbox(aap,'eeglab');
@@ -54,12 +54,8 @@ aap.tasksettings.aamod_meeg_rereference.diagnostics = aap.tasksettings.aamod_mee
 
 aap.tasksettings.aamod_meeg_ica.PCA = 'rank';
 aap.tasksettings.aamod_meeg_ica.iterations = 2000;
-aap.tasksettings.aamod_meeg_ica.method = 'AMICA';
-aap.tasksettings.aamod_meeg_ica.options.AMICA.num_models = 1; % learn 1 model
-% reject outliers (>3 SD) for the first 15 iterations 
-aap.tasksettings.aamod_meeg_ica.options.AMICA.numrej = 15; 
-aap.tasksettings.aamod_meeg_ica.options.AMICA.rejint = 1;
-aap.tasksettings.aamod_meeg_ica.options.AMICA.rejsig = 3;
+aap.tasksettings.aamod_meeg_ica.method = 'runica';
+aap.tasksettings.aamod_meeg_ica.options.runica.extended = 1;
 
 % Automatic IC rejection using ICLabel label probability (brain > 0.7) and and residual variance (< 0.15) from dipole fitting (if performed).
 aap.tasksettings.aamod_meeg_icclassification.method = 'ICLabel';
@@ -98,18 +94,17 @@ for subj = SUBJS
 end
 
 %% Epoching
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-1','S  101:S  103',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-2','S  103:S  105',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-3','S  105:S  107',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-4','S  107:S  109',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-5','S  109:S  111',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-6','S  111:S  113',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-7','S  113:S  115',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-8','S  115:end',0);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-1','S  101:S  103',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-2','S  103:S  105',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-3','S  105:S  107',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-4','S  107:S  109',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-5','S  109:S  111',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-6','S  111:S  113',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-7','S  113:S  115',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-8','S  115:end',[0 0]);
 
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','EC','S210',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','EO','S200',0);
-aap.tasksettings.aamod_meeg_epochs.timewindow = [0 2000];
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','EC','S210',0,[0 2000],[]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','EO','S200',0,[0 2000],[]);
 
 %% Analysis
 aap = aas_add_meeg_trialmodel(aap,'aamod_meeg_timefrequencyanalysis_00001','*','singlesession:run1','+1xEC','avg','ECAVG');

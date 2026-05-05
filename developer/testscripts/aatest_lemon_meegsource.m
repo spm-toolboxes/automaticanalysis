@@ -42,8 +42,8 @@ aap.tasksettings.aamod_meeg_prepareheadmodel.options.simbio.downsample = 2;
 aap.tasksettings.aamod_meeg_prepareheadmodel.options.simbio.meshshift = 0.1;
 aap.tasksettings.aamod_meeg_preparesourcemodel.method = 'grid';
 aap.tasksettings.aamod_meeg_preparesourcemodel.options.grid.resolution = '10';
-aap = aas_renamestream(aap,'aamod_norm_write_00001','structural','aamod_coreg_general_00001.structural','input');
-aap = aas_renamestream(aap,'aamod_norm_write_00001','epi','aamod_coreg_general_00001.structural','input');
+aap = aas_renamestream(aap,'aamod_norm_write_00001','structural','MNI_1mm','input');
+aap = aas_renamestream(aap,'aamod_norm_write_00001','epi','aamod_structuralfromnifti_00001.structural','input');
 aap = aas_renamestream(aap,'aamod_norm_write_00001','epi','structural','output');
 aap.tasksettings.aamod_norm_write.bb = [-90 90 -126 91 -72 109];
 aap.tasksettings.aamod_norm_write.vox = [1 1 1];
@@ -81,12 +81,8 @@ aap.tasksettings.aamod_meeg_rereference.diagnostics = aap.tasksettings.aamod_mee
 
 aap.tasksettings.aamod_meeg_ica.PCA = 'rank';
 aap.tasksettings.aamod_meeg_ica.iterations = 2000;
-aap.tasksettings.aamod_meeg_ica.method = 'AMICA';
-aap.tasksettings.aamod_meeg_ica.options.AMICA.num_models = 1; % learn 1 model
-% reject outliers (>3 SD) for the first 15 iterations 
-aap.tasksettings.aamod_meeg_ica.options.AMICA.numrej = 15; 
-aap.tasksettings.aamod_meeg_ica.options.AMICA.rejint = 1;
-aap.tasksettings.aamod_meeg_ica.options.AMICA.rejsig = 3;
+aap.tasksettings.aamod_meeg_ica.method = 'runica';
+aap.tasksettings.aamod_meeg_ica.options.runica.extended = 1;
 
 aap.tasksettings.aamod_meeg_dipfit.transformation = CHANNELFILE;
 aap.tasksettings.aamod_meeg_dipfit.volumeCondutionModel = fullfile('standard_BESA','standard_BESA.mat');
@@ -98,31 +94,26 @@ aap.tasksettings.aamod_meeg_icclassification.method = 'ICLabel';
 aap.tasksettings.aamod_meeg_icclassification.criteria.prob = 'Brain>0.7'; % Eye<0.8:*Muscle<0.8
 aap.tasksettings.aamod_meeg_icclassification.criteria.rv = 0.15;
 
-for b = 1:2
-    aap.tasksettings.aamod_meeg_timefrequencyanalysis(b).ignorebefore = -6; % ignore the first 5 trials for each trialtype 
-    aap.tasksettings.aamod_meeg_timefrequencyanalysis(b).timefrequencyanalysis.method = 'mtmfft';
-    aap.tasksettings.aamod_meeg_timefrequencyanalysis(b).timefrequencyanalysis.taper = 'hanning';
-    aap.tasksettings.aamod_meeg_timefrequencyanalysis(b).timefrequencyanalysis.foi = [1:0.5:13 15 20 25 32 40 60 70 80 95 110 120];
-    aap.tasksettings.aamod_meeg_timefrequencyanalysis(b).diagnostics.snapshotfwoi = [...
-        1 3.5;... % delta
-        4 7.5;... % theta
-        8 13;... % alpha
-        14 32;... % beta
-        33 80;... % low-gamma
-        81 120;... % high-gamma
-        ];
-    aap.tasksettings.aamod_meeg_timefrequencyanalysis(b).contrastoperation = 'ratio';
-end
-aap.tasksettings.aamod_meeg_timefrequencyanalysis(1).weightedaveraging = 1;
-aap.tasksettings.aamod_meeg_timefrequencyanalysis(2).diagnostics.snapshottwoi = [[0:120000:7*120000]' [0:120000:7*120000]'+120000];
+aap.tasksettings.aamod_meeg_timefrequencyanalysis.ignorebefore = -6; % ignore the first 5 trials for each trialtype 
+aap.tasksettings.aamod_meeg_timefrequencyanalysis.timefrequencyanalysis.method = 'mtmfft';
+aap.tasksettings.aamod_meeg_timefrequencyanalysis.timefrequencyanalysis.taper = 'hanning';
+aap.tasksettings.aamod_meeg_timefrequencyanalysis.timefrequencyanalysis.foi = [1:0.5:13 15 20 25 32 40 60 70 80 95 110 120];
+aap.tasksettings.aamod_meeg_timefrequencyanalysis.diagnostics.snapshotfwoi = [...
+    1 3.5;... % delta
+    4 7.5;... % theta
+    8 13;... % alpha
+    14 32;... % beta
+    33 80;... % low-gamma
+    81 120;... % high-gamma
+    ];
+aap.tasksettings.aamod_meeg_timefrequencyanalysis.contrastoperation = 'ratio';
+aap.tasksettings.aamod_meeg_timefrequencyanalysis.weightedaveraging = 1;
 
-for b = 1:2
-    aap = aas_renamestream(aap,sprintf('aamod_meeg_sourcereconstruction_%05d',b),'input','timefreq');
-    aap.tasksettings.aamod_meeg_sourcereconstruction(b).realignelectrodes.target = 'scalp';
-    aap.tasksettings.aamod_meeg_sourcereconstruction(b).realignelectrodes.method = 'spherefit';
-    aap.tasksettings.aamod_meeg_sourcereconstruction(b).diagnostics = struct_update(aap.tasksettings.aamod_meeg_sourcereconstruction(b).diagnostics,...
-        aap.tasksettings.aamod_meeg_timefrequencyanalysis(b).diagnostics,'Mode','update');
-end
+aap = aas_renamestream(aap,'aamod_meeg_sourcereconstruction_00001','input','timefreq');
+aap.tasksettings.aamod_meeg_sourcereconstruction.realignelectrodes.target = 'scalp';
+aap.tasksettings.aamod_meeg_sourcereconstruction.realignelectrodes.method = 'spherefit';
+aap.tasksettings.aamod_meeg_sourcereconstruction.diagnostics = struct_update(aap.tasksettings.aamod_meeg_sourcereconstruction.diagnostics,...
+    aap.tasksettings.aamod_meeg_timefrequencyanalysis.diagnostics,'Mode','update');
 
 %% DATA
 % Directory for raw data:
@@ -140,26 +131,22 @@ for subj = SUBJS
 end
 
 %% Epoching
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-1','S  101:S  103',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-2','S  103:S  105',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-3','S  105:S  107',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-4','S  107:S  109',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-5','S  109:S  111',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-6','S  111:S  113',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-7','S  113:S  115',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-8','S  115:end',0);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-1','S  101:S  103',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-2','S  103:S  105',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-3','S  105:S  107',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-4','S  107:S  109',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-5','S  109:S  111',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-6','S  111:S  113',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-7','S  113:S  115',[0 0]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','segment-8','S  115:end',[0 0]);
 
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','EC','S210',0);
-aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','EO','S200',0);
-aap.tasksettings.aamod_meeg_epochs.timewindow = [0 2000];
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','EC','S210',0,[0 2000],[]);
+aap = aas_add_meeg_event(aap,'aamod_meeg_epochs','*','run1','EO','S200',0,[0 2000],[]);
 
 %% Analysis
 aap = aas_add_meeg_trialmodel(aap,'aamod_meeg_timefrequencyanalysis_00001','*','singlesession:run1','+1xEC','avg','ECAVG');
 aap = aas_add_meeg_trialmodel(aap,'aamod_meeg_timefrequencyanalysis_00001','*','singlesession:run1','+1xEO','avg','EOAVG');
 aap = aas_add_meeg_trialmodel(aap,'aamod_meeg_timefrequencyanalysis_00001','*','singlesession:run1','+1xEC|-1xEO','avg','ECAVGminusEOAVG');
-
-aap = aas_add_meeg_trialmodel(aap,'aamod_meeg_timefrequencyanalysis_00002','*','singlesession:run1','+1xEC','segmentavg','ECCONT');
-aap = aas_add_meeg_trialmodel(aap,'aamod_meeg_timefrequencyanalysis_00002','*','singlesession:run1','+1xEO','segmentavg','EOCONT');
 
 %% RUN
 aa_doprocessing(aap);

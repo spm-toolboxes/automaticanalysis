@@ -3,16 +3,34 @@ function [aap, resp] = aamod_meeg_converttoeeglab(aap,task,subj,sess)
 resp='';
 
 switch task
-    case 'report'
+      case 'report'
+        % summary
+        % - init
+        if ~isfield(aap.report, aap.tasklist.currenttask.name)
+            aap.report.(aap.tasklist.currenttask.name).pnts = NaN(aas_getN_bydomain(aap,'subject'),numel(aap.acq_details.meeg_sessions));
+        end
+
+        % - save pnts
+        outFn = cellstr(aas_getfiles_bystream(aap,'meeg_session',[subj,sess],'meeg','output'));        
+        [~, EL] = aas_cache_get(aap,'eeglab');
+        switch EL.status
+            case 'defined', EL.load;
+            case 'unloaded', EL.reload;
+        end
+        EEG = pop_loadset(outFn{strcmp(spm_file(outFn,'ext'),'set')});
+        EL.unload;
+        aap.report.(aap.tasklist.currenttask.name).pnts(subj,sess) = EEG.pnts;
+
+        % figures
         for fn = cellstr(spm_select('FPList',aas_getsesspath(aap,subj,sess),'^diagnostic_.*jpg$'))'
             aap = aas_report_add(aap,subj,'<table><tr><td>');
-            aap=aas_report_addimage(aap,subj,fn{1});
+            aap = aas_report_addimage(aap,subj,fn{1});
             aap = aas_report_add(aap,subj,'</td></tr></table>');
         end
     case 'doit'
         infname = cellstr(aas_getfiles_bystream(aap,'meeg_session',[subj sess],'meeg'));
         
-        [junk, EL] = aas_cache_get(aap,'eeglab');
+        [~, EL] = aas_cache_get(aap,'eeglab');
         EL.load;
         
         % read data
@@ -20,7 +38,7 @@ switch task
         for i = 1:numel(infname)
             try
                 EEG = pop_fileio(infname{i});
-                [res,o1,o2] = evalc('eeg_checkset(EEG)');
+                res = evalc('eeg_checkset(EEG)');
                 if isempty(res), break;
                 else, throw(res); end
             catch err
@@ -42,10 +60,10 @@ switch task
             EEG = pop_select(EEG, 'nochannel', cellfun(@(x) find(strcmp({EEG.chanlocs.labels}, x)), chns));
         end
         
-        % downsample
-        if ~isempty(aas_getsetting(aap,'downsample'))
-            sRate = aas_getsetting(aap,'downsample');
-            if sRate ~= EEG.srate, EEG = pop_resample( EEG, aas_getsetting(aap,'downsample')); end
+        % downsample        
+        if ~isempty(aas_getsetting(aap,'downsample',sess)) && ~isnan(aas_getsetting(aap,'downsample',sess))
+            sRate = aas_getsetting(aap,'downsample',sess);
+            if sRate < EEG.srate, EEG = pop_resample( EEG, sRate); end
         end
         
         % edit
@@ -58,7 +76,7 @@ switch task
         toEdit = struct('type',{},'operation',{});
         for s = 1:numel(toEditsubj)
             sessnames = regexp(toEditsubj(s).session,':','split');
-            if any(strcmp(sessnames,aas_getsessname(aap,sess))) || sessnames{1} == '*'
+            if any(strcmp(sessnames,aas_getsessname(aap,sess))) || strcmp(sessnames{1}, '*')
                 toEdit = horzcat(toEdit,toEditsubj(s).event);
             end
         end
@@ -67,19 +85,35 @@ switch task
         if ~isempty(toEdit)
             for e = toEdit
                 if ischar(e.type)
-                    ind = ~cellfun(@isempty, regexp({EEG.event.type},e.type));
+                    try ind = ~cellfun(@isempty, regexp({EEG.event.type},e.type)); 
+                    catch
+                        aas_log(aap,false,sprintf('No trial %s found', e.type));
+                        ind = false(size(EEG.event));
+                    end
                 elseif isnumeric(e.type)
                     ind = e.type;
                 end
                 op = strsplit(e.operation,':');
-                if ~any(ind) && ~strcmp(op{1},'insert'), continue; end
+                if ~any(ind) && ~startsWith(op{1},'insert'), continue; end
                 switch op{1}
+                    case 'clear'
+                        EEG.event(1:end) = [];
+                        EEG.urevent(1:end) = [];
                     case 'remove'
+                        urind = [EEG.event(ind).urevent];
                         EEG.event(ind) = [];
-                        EEG.urevent(ind) = [];
+                        EEG.urevent(urind) = [];
                     case 'keep'
+                        urind = [EEG.event(ind).urevent];
                         EEG.event = EEG.event(ind);
-                        EEG.urevent = EEG.urevent(ind);
+                        EEG.urevent = EEG.urevent(urind);
+                    case 'keepbeforeevent'
+                        ind = find(ind);
+                        indCrit = find(strcmp({EEG.event.type},op{2}));                        
+                        indKeep = arrayfun(@(l) find(ind<l, 1, 'last'), indCrit);
+                        indOmit = setdiff(1:numel(ind),indKeep);
+                        EEG.event(ind(indOmit)) = [];
+                        EEG.urevent(ind(indOmit)) = [];
                     case 'rename'
                         for i = find(ind)
                             EEG.event(i).type = op{2};
@@ -119,8 +153,70 @@ switch task
                         events = [events newE(i+1) EEG.event(loc(i+1):end)];
                         EEG.event = events;
                         EEG.urevent = rmfield(events,'urevent');
+                    case {'insertwithlatency' 'insertwithtime'}
+                        latencies = op{2};
+                        if ~any(strcmp(latencies,{'beginning' 'end'})), latencies = str2num(latencies); end
+                        if ischar(latencies) % special cases
+                            switch latencies
+                                case 'beginning'
+                                    latencies = 1;
+                                case 'end'
+                                    latencies = EEG.pnts;
+                            end
+                        else
+                            switch op{1}
+                                case 'insertwithtime'
+                                    % find the samples at latencies exact or just later
+                                    tmplatencies = arrayfun(@(lat) find(EEG.times - lat>=0, 1, 'first'), abs(latencies), 'UniformOutput', false);
+                                    selLatOob = cellfun(@isempty, tmplatencies);
+                                    if any(selLatOob), tmplatencies(selLatOob & (latencies<0))= {EEG.pnts}; end
+                                    latencies = cell2mat(tmplatencies);
+                                case 'insertwithlatency'                                     
+                                    selLatOob = abs(latencies)>EEG.pnts;
+                                    if any(selLatOob), latencies(selLatOob & (latencies<0)) = EEG.pnts; end                                
+                            end
+                        end
+                        newE = struct(...
+                            'type',e.type,...
+                            'duration',EEG.srate/1000,...
+                            'timestamp',[],...
+                            'latency',num2cell(abs(latencies)),...
+                            'urevent',0 ...
+                            );
+                        if ~isfield(EEG.event,'timestamp'), newE = rmfield(newE,'timestamp'); end
+                        EEG.event = [EEG.event newE];
+                        [~, ord] = sort([EEG.event.latency]);
+                        EEG.event = EEG.event(ord);                        
+                        for i = 1:numel(EEG.event), EEG.event(i).urevent = i; end
+                        EEG.urevent = rmfield(EEG.event,'urevent');
+                    case 'inserteachbetween'
+                        ind_start = find(strcmp({EEG.event.type},op{2}),1,'first');
+                        ind_end = find(strcmp({EEG.event.type},op{4}),1,'last');
+                        latencies = EEG.event(ind_start).latency:str2num(op{3})*EEG.srate:EEG.event(ind_end).latency;
+                        latencies(1) = latencies(1)+1; % first sample after start
+                        if latencies(end) == EEG.event(ind_end).latency, latencies(end) = latencies(end)-1; end % last sample before end if overlap
+                        for lat = latencies
+                            EEG.event(end+1) = struct('type',e.type,...
+                                                      'duration',EEG.srate/1000,...
+                                                      'timestamp',[],...
+                                                      'latency',lat,...
+                                                      'urevent',[]);
+                        end
+                        EEG.event(strcmp({EEG.event.type},'empty')) = [];
+                        [~, ord] = sort([EEG.event.latency]);
+                        EEG.event = EEG.event(ord);                        
+                        for i = 1:numel(EEG.event), EEG.event(i).urevent = i; end
+                        EEG.urevent = rmfield(EEG.event,'urevent');
+                    case 'prefixpattern'
+                        pfx = strsplit(op{3}(2:end-1),' ');
+                        if sum(ind) ~= numel(pfx), aas_log(aap, true, sprintf('You need %d prefixes in a space-delimited list',sum(ind))); end
+                        ind = find(ind);
+                        for n = 1:numel(ind)
+                            EEG.event(ind(n)).type = regexprep(EEG.event(ind(n)).type,['(' op{2} ')'],[pfx{n} '$1']);
+                            EEG.urevent(EEG.event(ind(n)).urevent).type = EEG.event(ind(n)).type;
+                        end
                     case 'ignorebefore'
-                        EEG = pop_select(EEG,'nopoint',[0 EEG.event(ind(1)).latency-1]);
+                        EEG = pop_select(EEG,'nopoint',[0 EEG.event(find(ind,1,'first')).latency-1]);
                         beInd = find(strcmp({EEG.event.type},'boundary'),1,'first');
                         samplecorr = EEG.event(beInd).duration;
                         EEG.event(beInd) = [];
@@ -137,17 +233,20 @@ switch task
                             EEG.urevent(i).latency = EEG.urevent(i).latency - samplecorr;
                         end
                     case 'ignoreafter'
-                        EEG = pop_select(EEG,'nopoint',[EEG.event(ind(end)).latency EEG.pnts]);
-                        ureindcorr = EEG.event(end).urevent;
-                        
-                        % adjust events
-                        EEG.urevent(ureindcorr+1:end) = [];
+                        if EEG.pnts > EEG.event(find(ind,1,'last')).latency
+                            EEG = pop_select(EEG,'nopoint',[EEG.event(find(ind,1,'last')).latency+1 EEG.pnts]);
+                            beInd = find(strcmp({EEG.event.type},'boundary'),1,'last');
+                            EEG.event(beInd) = [];
+                        end
                     otherwise
                         aas_log(aap,false,sprintf('Operation %s not yet implemented',op{1}));
                 end
                 % update events
                 for i = 1:numel(EEG.event)
                     urind = find(strcmp({EEG.urevent.type},EEG.event(i).type) & [EEG.urevent.latency]==EEG.event(i).latency);
+                    if isempty(urind) % try based on timing only
+                        urind = find([EEG.urevent.latency]==EEG.event(i).latency);urind = find(strcmp({EEG.urevent.type},EEG.event(i).type) & [EEG.urevent.latency]==EEG.event(i).latency);
+                    end
                     EEG.event(i).urevent = urind(1);
                 end
             end
@@ -155,7 +254,7 @@ switch task
 
         % diagnostics
         diagpath = fullfile(aas_getsesspath(aap,subj,sess),['diagnostic_' mfilename '_raw.jpg']);
-        meeg_diagnostics_continuous(EEG,aas_getsetting(aap,'diagnostics'),'Raw',diagpath);
+        meeg_diagnostics_continuous(EEG,aas_getsetting(aap,'diagnostics'),sprintf('Raw with %d timepoint (~%d s)',EEG.pnts, round(EEG.xmax-EEG.xmin)),diagpath);
                 
         fnameroot = sprintf('eeg_%s',aas_getsubjname(aap,subj));
         while ~isempty(spm_select('List',aas_getsesspath(aap,subj,sess),[fnameroot '.*']))

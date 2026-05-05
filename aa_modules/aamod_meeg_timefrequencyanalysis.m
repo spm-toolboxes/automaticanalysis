@@ -82,21 +82,26 @@ switch task
             conSessionsBand = cell(1,numel(m.session.names));
             
             % process sessions
-            includedsessionnumbers = cellfun(@(x) find(strcmp({aap.acq_details.meeg_sessions.name},x)),m.session.names);
-            for sess = 1:numel(includedsessionnumbers)
-                sessnum = (includedsessionnumbers(sess));
-                
+            sess_in_model = cellfun(@(x) find(strcmp({aap.acq_details.meeg_sessions.name},x)),m.session.names);
+            for sess = sess_in_model
+               
                 clear data
-                meegfn = cellstr(aas_getfiles_bystream(aap,'meeg_session',[subj sessnum],'meeg'));
+                meegfn = cellstr(aas_getfiles_bystream(aap,'meeg_session',[subj sess],'meeg'));
                 switch spm_file(meegfn{1},'ext')
                     case 'mat'
                         filetype = 'fieldtrip';
-                    case 'set' 
+                    case {'fdt' 'set'}
                         filetype = 'eeglab';
                         meegfn = meegfn(strcmp(spm_file(meegfn,'ext'),'set'));
                     otherwise
-                        aas_log(aap,true,'Unsupported file format')
+                        if isempty(spm_file(meegfn{1},'ext'))
+                            continue;
+                        else
+                            aas_log(aap,true,'Unsupported file format')
+                        end
                 end
+                % - select only data with event-of-interest
+                meegfn = meegfn(cellfun(@(f) any(cellfun(@(e) contains(f,e),spm_file(m.event.names,'prefix','epochs_'))), meegfn));
                 for seg = 1:numel(meegfn)
                     switch filetype
                         case 'fieldtrip'
@@ -104,11 +109,10 @@ switch task
                             data(seg) = ft_struct2single(dat.data);
                         case 'eeglab'
                             FT.unload;
-                            if seg == 1
-                                [~, EL] = aas_cache_get(aap,'eeglab');
-                                EL.load;
-                            else
-                                EL.reload;
+                            if ~exist('EL','var'), [~, EL] = aas_cache_get(aap,'eeglab'); end
+                            switch EL.status
+                                case 'defined', EL.load;
+                                case 'unloaded', EL.reload;
                             end
                             EEG = pop_loadset('filepath',spm_file(meegfn{seg},'path'),'filename',spm_file(meegfn{seg},'filename'));
                             if isempty(EEG.epoch)
@@ -151,10 +155,12 @@ switch task
                         aas_log(aap,false,'WARNING: original eventinfo (ureventinfo) is not available -> ignorebefore and ignoreafter will be ignored')
                     end
                 end
+                if ~exist('data','var'), continue; end
                 data(cellfun(@isempty, {data.trial})) = []; % remove skipped segments
+                if isempty(data), continue; end
                 
                 % process events
-                kvs = regexp(spm_file(meegfn{1},'basename'),'[A-Z]+-[0-9]+','match');
+                kvs = unique(regexp(spm_file(meegfn,'basename'),'[A-Z0-9]+-[0-9]+','match','once'));
                 events = cellfun(@(x) strsplit(x,'-'), kvs,'UniformOutput',false);
                 conEventsFreq = cell(1,numel(m.event.names));
                 conEventsBand = cell(1,numel(m.event.names));
@@ -183,12 +189,29 @@ switch task
                             cfg.t_ftimwin = (data(i).time{1}(end)-data(i).time{1}(1))*ones(1,numel(cfg.foi));
                         end
                         tf{end+1} = ft_freqanalysis(cfg, data(i));
+                        
                         % baseline correction
                         if ~isempty(baswin)
                             lbc = tf{end}.labelcmb;
-                            tf{end} = ft_freqbaseline(bccfg,tf{end}); 
+                            tf{end} = ft_freqbaseline(bccfg,tf{end});
                             tf{end}.labelcmb = lbc;
                         end
+                        
+                        % subtract ERP spectra
+                        if aas_getsetting(aap, 'subtracterp')
+                            tfdata_tl = ft_freqanalysis(rmfield(cfg,'trials'),...
+                                ft_timelockanalysis(keepfields(cfg,'trials'), data(i)));
+                            if ~isempty(baswin)
+                                lbc = tfdata_tl.labelcmb;
+                                tfdata_tl = ft_freqbaseline(bccfg,tfdata_tl);
+                                tfdata_tl.labelcmb = lbc;
+                            end
+                           
+                            cfg = combinecfg;
+                            cfg.weights = [1 -1];
+                            tf{end} = ft_combine(cfg,tf{end}, tfdata_tl);
+                        end
+
                         if aas_getsetting(aap,'weightedaveraging')
                             weights(end+1) = numel(cfg.trials);
                         else
@@ -324,18 +347,18 @@ switch task
                     
                     % append to stream
                     outputFn = {};
-                    outstreamFn = aas_getoutputstreamfilename(aap,'meeg_session',[subj, sessnum],estim{1});
+                    outstreamFn = aas_getoutputstreamfilename(aap,'meeg_session',[subj, sess],estim{1});
                     if exist(outstreamFn,'file')
-                        outputFn = cellstr(aas_getfiles_bystream(aap,'meeg_session',[subj, sessnum],estim{1},'output'));
+                        outputFn = cellstr(aas_getfiles_bystream(aap,'meeg_session',[subj, sess],estim{1},'output'));
                     end
                     outputFn{end+1} = timefreqFn;
                     aap = aas_desc_outputs(aap,'meeg_session',[subj,sess],estim{1},outputFn);
                     
                     switch estim{1}
                         case 'timefreq'
-                            conSessionsFreq{sess} = timefreq;
+                            conSessionsFreq{sess==sess_in_model} = timefreq;
                         case 'timeband'
-                            conSessionsBand{sess} = timefreq;
+                            conSessionsBand{sess==sess_in_model} = timefreq;
                     end
                 end
 

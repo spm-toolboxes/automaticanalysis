@@ -15,9 +15,13 @@ elseif isprop(Task,'StartTime')
 else
     aas_log(obj.aap,true,'Time-related property of Task class not found!')
 end
+if isempty(finishTime)
+    finishTime = datetime('now');
+    if isprop(startTime,'TimeZone') && ~isempty(startTime.TimeZone), finishTime.TimeZone = startTime.TimeZone; end
+end
 
 try
-    elapsed = DisplayHelper.getRunningDuration(startTime,finishTime);
+    elapsed = DisplayHelper.getRunningDuration(finishTime-startTime);
 catch E
     if strcmp(E.identifier,'MATLAB:invalidType')
         elapsed = DisplayHelper.getRunningDuration(datetime2java(startTime),datetime2java(finishTime));

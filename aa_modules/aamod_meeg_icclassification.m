@@ -4,14 +4,29 @@ resp='';
 
 switch task
     case 'report'
+        SFX = {'accepted','rejected'};
+
+        % init summary
+        % - first session
+        if ~isfield(aap.report, aap.tasklist.currenttask.name)
+            for indSfx = 1:numel(SFX)
+                aap.report.(aap.tasklist.currenttask.name).(SFX{indSfx}) = NaN(aas_getN_bydomain(aap,'subject'),numel(aap.acq_details.meeg_sessions));
+            end
+        end
+
         for fnames = cellstr(spm_select('FPList',aas_getsesspath(aap,subj,sess),['^diagnostic_' mfilename '_[0-9]*.jpg$']))'
             aap = aas_report_addimage(aap,subj,fnames{1});
         end
-        aap = aas_report_add(aap,subj,'<table><tr><th>Accepted</th><th>Rejected</th></tr><tr>');
-        for sfx = {'accepted','rejected'}
+        nIC = cellfun(@(sfx) size(spm_select('FPList',aas_getsesspath(aap,subj,sess),['^diagnostic_.*' sfx '.*jpg$']),1)/2, SFX);
+        aap = aas_report_add(aap,subj,sprintf('<th>%c%s: %d</th>',...
+            upper(SFX{1}(1)), SFX{1}(2:end), nIC(1),...
+            upper(SFX{2}(1)), SFX{2}(2:end), nIC(2)...
+            ));
+        for indSfx = 1:numel(SFX)
+            aap.report.(aap.tasklist.currenttask.name).(SFX{indSfx})(subj,sess) = nIC(indSfx);
             aap = aas_report_add(aap,subj,'<td valign="top">');
-            for fn = cellstr(spm_select('FPList',aas_getsesspath(aap,subj,sess),['^diagnostic_.*' sfx{1} '.*jpg$']))'
-                aap=aas_report_addimage(aap,subj,fn{1});
+            for fn = cellstr(spm_select('FPList',aas_getsesspath(aap,subj,sess),['^diagnostic_.*' SFX{indSfx} '.*jpg$']))'
+                if ~isempty(fn{1}), aap=aas_report_addimage(aap,subj,fn{1}); end
             end
             aap = aas_report_add(aap,subj,'</td>');
         end
@@ -67,16 +82,18 @@ switch task
         end
 
         
-        % Plot rejected components
+        % Plot components
         sfx = {'rejected' 'accepted'};
+        freqrange = aas_getsetting(aap,'diagnostics.freqrange');
         for ic = 1:size(EEG.icaweights,1)
-            f = pop_prop_extended(EEG, 0, ic, NaN, {}, {}, 0, aas_getsetting(aap,'method'));
-            set(f,'PaperPositionMode','auto');
-            print(f,'-noui',fullfile(aas_getsesspath(aap,subj,sess),sprintf('diagnostic_%s_%s_IC%03d.jpg',mfilename,sfx{any(finalIcIdx==ic)+1},ic)),'-djpeg','-r300');
-            close(f);
+            for r = 1:size(freqrange,1)
+                f = pop_prop_extended(EEG, 0, ic, NaN, {'freqrange' freqrange(r,:)}, {}, 0, aas_getsetting(aap,'method'));
+                set(f,'PaperPositionMode','auto');
+                print(f,'-noui',fullfile(aas_getsesspath(aap,subj,sess),sprintf('diagnostic_%s_%s_IC%03d_%d.jpg',mfilename,sfx{any(finalIcIdx==ic)+1},ic,r)),'-djpeg','-r300');
+                close(f);
+            end
         end
-        
-        EEG = pop_subcomp(EEG, finalIcIdx, 0, 1);
+        if numel(finalIcIdx) < size(EEG.icaweights,1), EEG = pop_subcomp(EEG, finalIcIdx, 0, 1); end
         if size(EEG.etc.ic_classification.ICLabel.classifications,1) == size(EEG.icaweights,2) % EEGLAB <2021.0 does not adjust etc
             EEG.etc.ic_classification.ICLabel.classifications = EEG.etc.ic_classification.ICLabel.classifications(finalIcIdx,:);
         end

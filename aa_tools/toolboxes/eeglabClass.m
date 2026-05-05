@@ -55,8 +55,9 @@ classdef eeglabClass < toolboxClass
             if nargin < 2, keepWorkspace = false; end
             addpath(obj.toolPath);
             is_new_plugin = false;
-            eeglab;
-            if ~obj.showGUI, set(gcf,'visible','off'); end
+            if ~obj.showGUI, eeglab('nogui');
+            else, eeglab;
+            end
             obj.plugins = evalin('base','PLUGINLIST');
             
             plPost = {};
@@ -64,8 +65,9 @@ classdef eeglabClass < toolboxClass
             for p = reshape(pllist,1,[])
                 if any(strcmp({obj.requiredPlugins.name}, p.name)) && ~p.installed
                     plInf = obj.requiredPlugins(strcmp({obj.requiredPlugins.name},p.name));
-                    if ~isempty(plInf.version)
+                    if isfield(plInf,'version') && ~isempty(plInf.version)
                         if isnumeric(plInf.version), plInf.version = num2str(plInf.version); end
+                        plInf.version(plInf.version=='''') = [];
                         p.version = plInf.version;
                         p.zip = spm_file(p.zip,'basename',[p.name p.version]);
                         p.size = 1; % force install
@@ -85,6 +87,17 @@ classdef eeglabClass < toolboxClass
                 obj.(['postprocess_' p{1}])();
             end
             
+            % postprocess - clean_rawdata: add manopt for 
+            [~,~,pl] = plugin_status('clean_rawdata');
+            plPath = fullfile(obj.toolPath,'plugins',pl.foldername);
+            if exist(fullfile(plPath,'manopt'),'dir')
+                addpath(genpath(fullfile(plPath,'manopt')))
+            end
+
+            % postprocess - dipfit: add headmodel dirs
+            addpath(fullfile(obj.dipfitPath,'standard_BEM'))
+            addpath(fullfile(obj.dipfitPath,'standard_BESA'))
+
             load@toolboxClass(obj,keepWorkspace)
         end
         

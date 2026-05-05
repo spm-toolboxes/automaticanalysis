@@ -7,9 +7,11 @@ function outData = ft_average_bands(cfg,ipfdata,inData)
 %                       band, 1xN cell array with names of the bands as a subset of {'delta' 'theta' 'alpha' 'beta' 'low gamma' 'high gamma'}
 %                           (default = {'alpha' 'beta'})
 %                       bandbound, a 1xN cell array with lower and upper frequency bounds (as 1x2 numeric array) corresponding to cfg.bandspec.band 
-%                           (default = {[8 13] [14 32]})
+%                           (default = {[8 13.5] [13.5 32]})
 %
-% Optionally, you can specify a band data indicating individual peaks and bandwidths of frequency bands to adjust band specification. 
+% Optionally, you can specify a band data indicating individual peaks and bandwidths of frequency bands to adjust band specification.
+% This band data MUST also follow the band data structure (see below); however, peak* data can be NxM cell array (where
+% N = number channels and M = number of bands) in case multiple peaks have been found within the band.
 %
 %   An example of a band data structure containing the individual band information for 61 channels and 6 bands is
 %

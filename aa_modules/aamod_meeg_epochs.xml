@@ -8,11 +8,8 @@
                 <memoryBase>0.5</memoryBase>
             </qsub>
             
-            <timewindow desc='Time window in PST ms (1x2 numeric array)'></timewindow>
-
-            <baselinewindow desc="specify baseline as [begin end] in milliseconds for baseline correction, can be 'all' for the whole epoch"></baselinewindow>
-            
             <rejectionevent desc='eventvalue used to indicate rejection of data'>boundary</rejectionevent>
+            <ensurefieldtripcompatibility desc='ensure Fieldtrip-compatibility by re-inserting t=0 event if outside event window'>1</ensurefieldtripcompatibility>
             
             <eventtype></eventtype>
             <condition>
@@ -23,11 +20,14 @@
                     <eventvalue></eventvalue>
                     <eventtype></eventtype>                    
                     <trlshift desc='stimulus presentation delay in millisecond'></trlshift> <!--- usually 34ms for visual, 9ms for auditory -->
+                    <eventwindow desc='Event time window in PST ms (1x2 numeric array)'></eventwindow>
+                    <baselinewindow desc="specify baseline as [begin end] in milliseconds for baseline correction, can be 'all' for the whole epoch"></baselinewindow>
                 </event>
             </condition>
+            <eventmatch desc='save EEG with events from the same trials; cell array (eventmatches) of cell arrays (conditionlabel to match)'></eventmatch>
             
             <inputstreams>
-                <stream>meeg</stream>
+                <stream ismodified='0'>meeg</stream>                
             </inputstreams>
             
             <outputstreams>

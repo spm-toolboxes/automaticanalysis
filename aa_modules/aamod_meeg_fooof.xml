@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aap>
+    <tasklist>
+        <currenttask domain='subject' desc='FOOOF' modality='MEEG'>
+            
+            <qsub>
+                <timeBase>0.25</timeBase>
+                <memoryBase>0.75</memoryBase>
+            </qsub>
+
+            <frequencyrange desc='Frequency range specified as [1x2]; specify "all" for the complete data'>all</frequencyrange>
+            <bandspecification desc='averaging frequency estimate according to the bands adjusted based on FOOOF estimates'>
+                <band desc='band names, [1xN] cell of strings'></band>
+                <bandbound desc='band boundaries [1xN] cell of [1x2] double arrays in Hz'></bandbound>
+            </bandspecification>
+            <aperiodicmode desc='approach to take for fitting the aperiodic component' options='fixed|knee' ui='optionlist'>fixed</aperiodicmode>
+
+            <inputstreams>
+                <stream>timefreq</stream>
+            </inputstreams>
+            
+            <outputstreams>
+                <stream>aperiodic</stream>
+                <stream>peaks</stream>
+                <stream isessential='0' isrenameable='1'>timeband</stream>
+            </outputstreams>
+
+            </currenttask>
+    </tasklist>
+</aap>

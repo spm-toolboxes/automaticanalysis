@@ -6,7 +6,7 @@
 % Rhodri Cusack MRC CBU Cambridge 2004
 % Tibor Auer MRC CBU Cambridge 2012-2016
 
-function [aap]=aa_report(studyroot,stages)
+function [aap]=aa_report(studyroot,stages,provsubj)
 
 fprintf('Fetching report started...\n');
 
@@ -30,7 +30,7 @@ aa_init(aap);
 
 % stages to report
 allstages = arrayfun(@(x) aas_getstagetag(aap,x), 1:numel(aap.tasklist.main.module), 'UniformOutput', false);
-if ~exist('stages','var')
+if ~exist('stages','var') || isempty(stages)
     stages=allstages;
     provnoinput = false;
 else
@@ -47,6 +47,7 @@ aap.internal.stagesnotdone=0;
 
 aap.prov = aa_provenance(aap);
 aap.prov.donotcheckinput = provnoinput;
+if exist('provsubj','var'), aap.prov.setSubject(provsubj); end
 
 % Flags for special reports
 % - collect module executables
@@ -118,9 +119,19 @@ for k = stageindices
         
         % build dependency
         [dep, domaintree] = aas_dependencytree_allfromtrunk(curr_aap,domain);
+        depind = cell2mat(cellfun(@(c) c{2}, dep, 'UniformOutput', false));
+        doSummary = ~isempty(depind) && numel(unique(depind(:,1))) > 1;
         
         % Set inSession flag
-        inSession = (numel(domaintree) >= 2) & ~isempty(strfind(domain,'session'));
+        inSession = (numel(domaintree) >= 2) & contains(domain,'session');
+        
+        % Last subject (for each session)
+        if inSession
+            depcombind = prod(depind,2);
+            lastDep = arrayfun(@(s) [depind(find(depcombind==max(depcombind(depind(:,2)==s)),1,'last'),1) s], unique(depind(:,2)), 'UniformOutput', false);
+        elseif ~isempty(depind)
+            lastDep = {depind(end)};
+        end
 
         % run through
         for d = 1:numel(dep)
@@ -132,7 +143,7 @@ for k = stageindices
             if inSession
                 sessdomain = domain;
                 if numel(domaintree) > 2, sessdomain = domaintree{2}; end
-                [junk, iSess] = aas_getN_bydomain(curr_aap,sessdomain,subj);
+                [~, iSess] = aas_getN_bydomain(curr_aap,sessdomain,subj);
                 firstSess = iSess(1);
                 lastSess = iSess(end);
             end
@@ -166,6 +177,9 @@ for k = stageindices
                 run_aap.prov = aap.prov;
          
                 run_aap = aa_feval_withindices(mfile_alias,run_aap,'report',indices);
+                if doSummary && any(cellfun(@(ld) isequal(dep{d}{2}, ld), lastDep))
+                    run_aap = aa_feval_withindices(mfile_alias,run_aap,'summary',indices);
+                end
                 
                 % save report
                 aap.report = run_aap.report;
@@ -180,11 +194,10 @@ for k = stageindices
 end
 
 % Close files
-aap = aas_report_add(aap,[],'EOF');
-aap = aas_report_add(aap,0,'EOF');
 for subj = 1:aas_getN_bydomain(aap,'subject')
     aap = aas_report_add(aap,subj,'EOF');
 end
+aap = aas_report_add(aap,0,'EOF');
 if has_motioncorrection, aap = aas_report_add(aap,'moco','EOF'); end
 if has_registration, aap = aas_report_add(aap,'reg','EOF'); end
 if has_firstlevel
@@ -195,6 +208,7 @@ if has_firstlevel
     end
 end
 if has_meegepochs, aap = aas_report_add(aap,'er','EOF'); end
+aap = aas_report_add(aap,[],'EOF');
 
 % Provenance
 aap.prov.serialise(studyroot);
